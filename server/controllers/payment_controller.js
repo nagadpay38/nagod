@@ -175,7 +175,14 @@ export const payment = async (req, res) => {
   const apiKey = req.headers["x-api-key"] ? req.headers["x-api-key"] : "";
   const data = req.body;
   console.log("payment-data", data);
-  //  console.log(req.body);
+    const matchapikey=await User.findOne({apiKey});
+    console.log(matchapikey)
+    if(!matchapikey){
+     return  res.status(200).json({
+        success: false,
+        message: "Merchant does not exist."
+      })
+    }
   if (
     !data.mid ||
     !data.provider ||
@@ -532,6 +539,17 @@ export const payout = async (req, res) => {
 export const checkout = async (req, res) => {
   const { paymentId } = req.body;
   console.log("checkout-paymentId", paymentId);
+    const apiKey = req.headers['x-api-key']?req.headers['x-api-key']:'';
+    const data = req.body;
+    console.log('bkash-payment-data', req.body.payerId);
+    const matchapikey=await User.findOne({apiKey});
+    console.log(matchapikey)
+    // if(!matchapikey){
+    //  return  res.status(200).json({
+    //     success: false,
+    //     message: "Merchant does not exist."
+    //   })
+    // }
   const { mid } = req.params;
 
   try {
@@ -545,7 +563,7 @@ export const checkout = async (req, res) => {
     console.log("Expected Amount:", expectedAmount);
 
     // 2. Find all agents for the merchant
-    const match_agent = await Agent_model.find({status:"activated",merchant_name: match_payment.merchant,api_account:false,account_type:"agent"});
+    const match_agent = await Agent_model.find({status:"activated",merchant_name: match_payment.merchant,api_account:false,account_type:"agent",mfs:match_payment.provider});
     if (!match_agent || match_agent.length === 0) {
       return res.send({ success: false, message: "No agents available for this merchant" });
     }
@@ -588,7 +606,7 @@ export const checkout = async (req, res) => {
       data: match_payment,
       agent: selectedAgent
     });
-
+console.log(selectedAgent)
   } catch (error) {
     console.error("Checkout error:", error);
     return res.status(500).send({

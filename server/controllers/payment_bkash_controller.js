@@ -73,28 +73,28 @@ export const payment_bkash = async (req, res) => {
   const apiKey = req.headers['x-api-key']?req.headers['x-api-key']:'';
   const data = req.body;
   console.log('bkash-payment-data', req.body.payerId);
-  
-  if (!data.mid || !data.orderId || !data.payerId || !data.amount || !data.currency || !data.redirectUrl || !data.callbackUrl) {
+  if (!data.mid || !data.orderId || !data.payerId || !data.amount || !data.currency || !data.redirectUrl || !data.callbackUrl) { //
     return res.status(200).json({
       success: false,
       orderId: data.orderId,
       message: "Required fields are not filled out."
     })
   }
-  
   console.log("pass-condition-1")
-  
-  if (data.currency === "USD" && parseFloat(data.amount) < 10) {
+ if (data.currency === "USD" && parseFloat(data.amount) < 10) {
     return res.status(200).json({
       success: false,
       orderId: data.orderId,
       message: "Minimum deposit amount should be at least 10 for USD currency."
     })
   }
-  
+  console.log("pass-condition-2")
+  console.log(data.mid)
   try {
     const merchant = await User.findOne({name: data.mid, status: 'activated'});
-    
+  
+    console.log(merchant)
+    // -------------new-code----------------------
     if (!merchant) {
       return res.status(200).json({
         success: false,
@@ -103,49 +103,45 @@ export const payment_bkash = async (req, res) => {
       })
     }
     
+    // -------------new-code--------------
     const payinTransaction = await PayinTransaction.findOne({
-      orderId: data.orderId,
+			orderId: data.orderId,
       merchant: data.mid
-    });
-    
-    if (payinTransaction) {
+		});
+		if (payinTransaction) {
       console.log('same order id for payment', data.orderId, payinTransaction.status);
-      return res.status(200).json({
+			return res.status(200).json({
         success: false,
         orderId: data.orderId,
         message: "Transaction with duplicated order id, " + data.orderId + "."
       });  
-    }
-    
-    // Find eligible API accounts with sufficient balance and limit
-    const eligibleAccounts = await Agent_model.find({
-      merchant_name: data.mid,
-      api_account: true,
-      balance_in_bdt: { $gte: data.amount },
-    });
-    
-    console.log("Eligible API accounts:", eligibleAccounts);
-    
-    if (!eligibleAccounts || eligibleAccounts.length === 0) {
+		}
+    const find_agent_number = await Agent_model.aggregate([
+      { $match: { balanceAmount: { $gt: data.amount } } }, // Filter agents with sufficient balance
+      { $sample: { size: 1 } } // Pick one random agent
+    ]);
+     console.log("find_agent_number",find_agent_number)
+    const apiAccountBkash = await ApiAccountBkash.find({accountName:data.mid,status:"activated"})
+    console.log("blkash",apiAccountBkash)
+    if (!apiAccountBkash) {
       return res.status(200).json({
         success: false,
         orderId: data.orderId,
-        message: "No available API accounts with sufficient balance and limit for this transaction."
+        message: "There is no available Bkash API account with this merchant."
       });
     }
-    
-    // Randomly select one from eligible accounts
-    const randomIndex = Math.floor(Math.random() * eligibleAccounts.length);
-    const selectedAccount = eligibleAccounts[randomIndex];
-    console.log("Selected API account:", selectedAccount.accountNumber);
-    
-    // Update BKASH credentials based on selected account
-    if (data.mid !== 'merchant1' && selectedAccount) {
+    const count_bkash_api = apiAccountBkash.length;
+    console.log("length",count_bkash_api)
+    const random_bkash_api = Math.floor(Math.random() * count_bkash_api);
+    const random_match_api = apiAccountBkash[random_bkash_api];
+    console.log(random_match_api);
+    // ------------------new-code--------------------------
+     if (data.mid !== 'merchant1' && random_match_api) {
       BKASH_URL = 'https://tokenized.pay.bka.sh/v1.2.0-beta/tokenized/checkout';
-      BKASH_USERNAME = selectedAccount.username;
-      BKASH_PASSWORD = selectedAccount.password;
-      BKASH_APP_KEY = selectedAccount.appKey;
-      BKASH_APP_SECRET_KEY = selectedAccount.appSecretKey;
+      BKASH_USERNAME = random_match_api.username;
+      BKASH_PASSWORD = random_match_api.password;
+      BKASH_APP_KEY = random_match_api.appKey;
+      BKASH_APP_SECRET_KEY = random_match_api.appSecretKey;
     }
 
     const token = await get_token_bkash();
@@ -158,7 +154,7 @@ export const payment_bkash = async (req, res) => {
       }); 
     }
     
-    const referenceId = nanoid(16);
+    const referenceId = nanoid(16); // uuidv4();
     const body = {
       mode: '0011', 
       payerReference: data.payerId,
@@ -167,6 +163,7 @@ export const payment_bkash = async (req, res) => {
       currency: data.currency,
       intent: 'sale',
       merchantInvoiceNumber: referenceId,
+      // merchantAssociationInfo: 'MI'
     };
 
     const createObj = await axios.post(`${BKASH_URL}/create`, body, {
@@ -178,23 +175,20 @@ export const payment_bkash = async (req, res) => {
       }
     });
 
-    console.log('bkash-payment-create-resp', createObj.data);
-    
-    const create_user_pament = new merchant_model({
-      merchant_name: data.mid,
-      player_id: data.payerId,
-      website_url: data.redirectUrl
-    });
-    
-    if(create_user_pament) {
+    console.log('bkash-payment-create-resp', createObj.data); // return;
+     const create_user_pament=new merchant_model({
+     merchant_name: data.mid,
+     player_id:data.payerId,
+     website_url: data.redirectUrl
+     });
+     if(create_user_pament){
       create_user_pament.save();
-    }
-    
+     }
     if (createObj.data.statusCode && createObj.data.statusCode === '0000') {
       const newTransaction = await PayinTransaction.create({
         paymentId: createObj.data.paymentID,
         merchant: data.mid,
-        agentAccount: selectedAccount.accountNumber,
+        agentAccount: random_match_api.accountNumber,
         provider: 'bkash',
         orderId: data.orderId,
         payerId: data.payerId,
@@ -224,12 +218,15 @@ export const payment_bkash = async (req, res) => {
     }
 
   } catch (e) {
+
     console.log('bkash-payment-error', e.message);
+
     res.status(500).json({ 
       success: false,
       orderId: data.orderId,
       message: e.message 
     });
+
   }
 };
 
