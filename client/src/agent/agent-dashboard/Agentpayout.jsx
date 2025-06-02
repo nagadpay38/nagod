@@ -15,6 +15,8 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
 import Select from "@mui/material/Select";
+import Modal from '@mui/material/Modal';
+import Paper from '@mui/material/Paper';
 
 // Helper components
 const FlexBetween = ({ children, style }) => (
@@ -53,30 +55,23 @@ const Agentpayout = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = 10;
 
-  // Payout state
-  const [data, setData] = useState({});
+  // Withdrawal state
+  const [data, setData] = useState([]);
+  const [agentData, setAgentData] = useState({});
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState([]);
+  const [status, setStatus] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [transiction_value, settransiction_value] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
-  const [sort, setSort] = useState({});
-  const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [provider, setProvider] = useState("all");
   const [orderId, setOrderId] = useState("");
-  const [paymentId, setPaymentId] = useState("");
   const [transactionId, setTransactionId] = useState("");
-  const [payeeId, setPayeeId] = useState("");
-  const [agentAccount, setAgentAccount] = useState("");
-  const [payeeAccount, setPayeeAccount] = useState("");
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
-  const [payoutStatus, setPayoutStatus] = useState("all");
-  const [isTest, setIsTest] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [withdrawalStatus, setWithdrawalStatus] = useState("all");
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const refreshIntervalRef = useRef(null);
 
   // Current date setup
@@ -111,12 +106,35 @@ const Agentpayout = () => {
     });
   };
 
+  // Resend callback function
+  const handleResendCallback = (id) => {
+    setLoading(true);
+    axios
+      .post(`${process.env.REACT_APP_BASE_URL}/payment/resendCallbackPayout`, {
+        authEmail: agent_info.email,
+        payment_id: id,
+      })
+      .then((res) => {
+        if (res.data.message) {
+          Swal.fire({
+            icon: "info",
+            title: "Info!",
+            text: res.data.message,
+            showConfirmButton: true,
+          });
+        }
+        fetchWithdrawals();
+      })
+      .catch((err) => console.log(err))
+      .finally(() => setLoading(false));
+  };
+
   // Auto refresh setup
   useEffect(() => {
     if (autoRefresh) {
       refreshIntervalRef.current = setInterval(() => {
-        fetchTransactions();
-      }, 1000); // Refresh every 1 second
+        fetchWithdrawals();
+      }, 5000); // Refresh every 5 seconds
     } else {
       clearInterval(refreshIntervalRef.current);
     }
@@ -124,7 +142,7 @@ const Agentpayout = () => {
     return () => {
       clearInterval(refreshIntervalRef.current);
     };
-  }, [autoRefresh, page, pageSize, isTest]);
+  }, [autoRefresh, page, pageSize]);
 
   useEffect(() => {
     window.addEventListener("scroll", () => {
@@ -134,10 +152,10 @@ const Agentpayout = () => {
         setactivetopbar(false);
       }
     });
-    fetchTransactions();
-  }, [page, pageSize, isTest]);
+    fetchWithdrawals();
+  }, [page, pageSize]);
 
-  // Payout functions
+  // Withdrawal functions
   const dateToString = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -145,60 +163,27 @@ const Agentpayout = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const fetchTransactions = () => {
+  const fetchWithdrawals = () => {
     setLoading(true);
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/client/payoutTransactions`, {
+      .get(`${process.env.REACT_APP_BASE_URL2}/agent-withdrawal-data/${agent_info._id}`, {
         params: {
-          authUser: JSON.stringify(agent_info),
-          provider,
+          status: withdrawalStatus,
           orderId,
-          paymentId,
-          agentAccount,
-          payeeAccount,
-          payeeId,
           transactionId,
           minAmount,
           maxAmount,
-          payoutStatus,
           startDate: dateToString(startDate),
           endDate: dateToString(endDate),
-          page,
-          pageSize,
-          sort: JSON.stringify(sort),
-          mode: isTest ? "test" : "live",
+          page: page + 1, // API uses 1-based indexing
+          limit: pageSize,
         },
       })
       .then((res) => {
-        setData(res.data);
-        setStatus(
-          res.data.transactions.map((transaction) => {
-            return { [transaction._id]: transaction.status };
-          })
-        );
-      })
-      .catch((err) => console.log(err))
-      .finally(() => setLoading(false));
-  };
-
-  const handleResendCallback = (id) => {
-    setLoading(true);
-    axios
-      .post(`${process.env.REACT_APP_BASE_URL}/payment/resendCallbackPayout`, {
-        authEmail: agent_info.email,
-        id,
-      })
-      .then((res) => {
-        console.log(res)
-        if (res.data.message) {
-          Swal.fire({
-            icon: "info",
-            title: "Info!",
-            text: res.data.message,
-            showConfirmButton: true,
-          });
+        if (res.data.success) {
+          setData(res.data.data.withdrawalRequests);
+          setAgentData(res.data.data.agent);
         }
-        fetchTransactions();
       })
       .catch((err) => console.log(err))
       .finally(() => setLoading(false));
@@ -206,8 +191,8 @@ const Agentpayout = () => {
 
   const handleUpdate = (row) => {
     setSelectedRow(row);
-    settransiction_value(row.transactionId || "");
     setStatus(row.status);
+    settransiction_value(row.transactionId || "");
     setIsModalOpen(true);
   };
 
@@ -216,11 +201,11 @@ const Agentpayout = () => {
   };
 
   const handleSaveUpdate = () => {
-    if (!transiction_value || !status) {
+    if (!status) {
       Swal.fire({
         icon: 'error',
         title: 'Oops...',
-        text: 'Transaction ID and Status are required!',
+        text: 'Status is required!',
       });
       return;
     }
@@ -228,10 +213,12 @@ const Agentpayout = () => {
     if (selectedRow) {
       const rowId = selectedRow._id;
       const newStatus = status;
+      
       axios.post(`${process.env.REACT_APP_BASE_URL}/payment/changePayoutStatus`, {
-        id: rowId,
-        transactionId: transiction_value,
         status: newStatus,
+        payment_id: selectedRow.transactionId,
+        transactionId: transiction_value,
+        admin_name: agent_info._id
       }).then((res) => {
         if(res.data.success) {
           Swal.fire({
@@ -240,10 +227,12 @@ const Agentpayout = () => {
             text: `${res.data.message}`,
           });
           
-          // Automatically resend callback after status update
-          handleResendCallback(rowId);
-          
-          fetchTransactions();
+          // Only resend callback if status is changed to success
+          if (newStatus === "success") {
+            handleResendCallback(selectedRow.transactionId);
+          } else {
+            fetchWithdrawals();
+          }
         } else {
           Swal.fire({
             icon: 'error',
@@ -281,89 +270,31 @@ const Agentpayout = () => {
     />
   );
 
-  const transactionTableColumns = [
+  const withdrawalTableColumns = [
     {
-      field: "orderId_paymentId",
-      headerName: "ORDER ID",
-      flex: 0.7,
+      field: "transactionId",
+      headerName: "TRANSACTION ID",
+      flex: 0.8,
       renderCell: (params) => (
-        <div className="flex flex-col">
-          <div className="flex items-center">
-            {params.row.orderId}
+        <div className="flex items-center">
+          {params.row.transactionId || "N/A"}
+          {params.row.transactionId && (
             <button 
-              onClick={() => copyToClipboard(params.row.orderId)}
+              onClick={() => copyToClipboard(params.row.transactionId)}
               className="ml-2 text-gray-500 hover:text-blue-500"
             >
               <AiOutlineCopy size={14} />
             </button>
-          </div>
-          <div className="flex items-center">
-            {params.row.paymentId}
-            <button 
-              onClick={() => copyToClipboard(params.row.paymentId)}
-              className="ml-2 text-gray-500 hover:text-blue-500"
-            >
-              <AiOutlineCopy size={14} />
-            </button>
-          </div>
+          )}
         </div>
       ),
     },
     {
-      field: "agent",
-      headerName: "PAYMENT CHANNEL",
-      flex: 1,
-      renderCell: (params) => (
-        <>
-          {params.row.provider.charAt(0).toUpperCase() + params.row.provider.slice(1)} Personal
-          <br />
-          <div className="flex items-center">
-            {params.row.agentAccount}
-            <button 
-              onClick={() => copyToClipboard(params.row.agentAccount)}
-              className="ml-2 text-gray-500 hover:text-blue-500"
-            >
-              <AiOutlineCopy size={14} />
-            </button>
-          </div>
-        </>
-      ),
-    },
-    {
-      field: "payee",
-      headerName: "PAYEE",
-      flex: 1,
-      renderCell: (params) => (
-        <>
-          <div className="flex items-center">
-            {params.row.payeeId}
-            <button 
-              onClick={() => copyToClipboard(params.row.payeeId)}
-              className="ml-2 text-gray-500 hover:text-blue-500"
-            >
-              <AiOutlineCopy size={14} />
-            </button>
-          </div>
-          <div className="flex items-center">
-            {params.row.payeeAccount}
-            <button 
-              onClick={() => copyToClipboard(params.row.payeeAccount)}
-              className="ml-2 text-gray-500 hover:text-blue-500"
-            >
-              <AiOutlineCopy size={14} />
-            </button>
-          </div>
-        </>
-      ),
-    },
-    {
-      field: "trans",
-      headerName: "TRANSACTION ID",
-      flex: 1,
+      field: "date",
+      headerName: "DATE",
+      flex: 0.6,
       renderCell: (params) => {
-        const dateRequest = new Date(params.row.statusDate);
-        const dateSent = new Date(params.row.createdAt);
-
+        const date = new Date(params.row.date);
         const options = {
           year: "numeric",
           month: "short",
@@ -372,124 +303,157 @@ const Agentpayout = () => {
           minute: "numeric",
           hour12: true,
         };
-
-        const formattedRequestDate = dateRequest.toLocaleString("en-US", options);
-        const formattedSentDate = params.row.createdAt
-          ? dateSent.toLocaleString("en-US", options)
-          : null;
-
-        const expirationDuration = 24 * 60 * 60 * 1000;
-        const elapsedTime = dateSent - dateRequest;
-        const delayed = elapsedTime > expirationDuration;
-
-        return (
-          <div className="flex flex-col">
-            <div className="flex items-center">
-              <span style={delayed ? { color: "#ff7474", cursor: "pointer" } : { cursor: "pointer" }}
-                title={formattedSentDate}>
-                {params.row.transactionId || "N/A"}
-              </span>
-              {params.row.transactionId && (
-                <button 
-                  onClick={() => copyToClipboard(params.row.transactionId)}
-                  className="ml-2 text-gray-500 hover:text-blue-500"
-                >
-                  <AiOutlineCopy size={14} />
-                </button>
-              )}
-            </div>
-            {formattedRequestDate && <p className="text-green-500">{formattedRequestDate}</p>}
-            {formattedSentDate && <p>{formattedSentDate}</p>}
-          </div>
-        );
+        return date.toLocaleString("en-US", options);
       },
     },
     {
-      field: "request",
-      headerName: "REQUESTED",
+      field: "method",
+      headerName: "METHOD",
       flex: 0.5,
+    },
+    {
+      field: "payeeAccount",
+      headerName: "PAYEE ACCOUNT",
+      flex: 0.7,
       renderCell: (params) => (
-        <>
-          {params.row.requestAmount && params.row.currency + " " + params.row.requestAmount}
-        </>
+        <div className="flex items-center">
+          {params.row.payeeAccount || "N/A"}
+          {params.row.payeeAccount && (
+            <button 
+              onClick={() => copyToClipboard(params.row.payeeAccount)}
+              className="ml-2 text-gray-500 hover:text-blue-500"
+            >
+              <AiOutlineCopy size={14} />
+            </button>
+          )}
+        </div>
       ),
     },
     {
-      field: "requestAmount",
-      headerName: "PAID",
+      field: "amount",
+      headerName: "AMOUNT",
       flex: 0.5,
       renderCell: (params) => (
-        <>
-          {params.row.sentAmount && params.row.currency + " " + params.row.sentAmount}
-        </>
+        <div>
+          {params.row.amount} {params.row.currency}
+        </div>
       ),
     },
     {
-      field: "payable",
-      headerName: "Status",
+      field: "merchantReference",
+      headerName: "REFERENCE",
+      flex: 0.7,
+    },
+    {
+      field: "status",
+      headerName: "STATUS",
       flex: 0.5,
       renderCell: (params) => {
         const getStatusStyle = (status) => {
-          switch (status) {
+          switch (status?.toLowerCase()) {  // Ensure case-insensitive comparison
             case "pending":
-              return { color: "orange", fontWeight: "bold", fontSize: "15px" };
-            case "assigned":
-              return { color: "blue", fontWeight: "bold", fontSize: "15px" };
+              return { 
+                backgroundColor: "#FFF3CD",
+                color: "#856404",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                fontWeight: "600",
+                fontSize: "12px"
+              };
             case "success":
-              return { color: "green", fontWeight: "bold", fontSize: "15px" };
+            case "completed":
+              return { 
+                backgroundColor: "#D4EDDA",
+                color: "#155724",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                fontWeight: "600",
+                fontSize: "12px"
+              };
             case "rejected":
-              return { color: "red", fontWeight: "bold", fontSize: "15px" };
+              return { 
+                backgroundColor: "#F8D7DA",
+                color: "#721C24",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                fontWeight: "600",
+                fontSize: "12px"
+              };
             case "failed":
-              return { color: "darkred", fontWeight: "bold", fontSize: "15px" };
+              return { 
+                backgroundColor: "#F5E6E8",
+                color: "#721C24",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                fontWeight: "600",
+                fontSize: "12px"
+              };
             default:
-              return { color: "gray", fontWeight: "bold", fontSize: "15px" };
+              return { 
+                backgroundColor: "#E2E3E5",
+                color: "#383D41",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                fontWeight: "600",
+                fontSize: "12px"
+              };
           }
         };
 
         return (
           <span style={getStatusStyle(params.row.status)}>
-            {params.row.status || "N/A"}
+            {params.row.status?.toUpperCase() || "N/A"}
           </span>
         );
       },
     },
     {
-      field: "update",
-      headerName: "Update",
-      flex: 0.5,
-      renderCell: (params) => (
-        <button
-          onClick={() => handleUpdate(params.row)}
-          disabled={params.row.status === "success"}
-          style={{
-            backgroundColor: params.row.status === "success" ? "#ccc" : "#007BFF",
-            color: params.row.status === "success" ? "#666" : "white",
-            border: "1px solid",
-            borderColor: params.row.status === "success" ? "#ccc" : "#007BFF",
-            padding: "8px 16px",
-            cursor: params.row.status === "success" ? "not-allowed" : "pointer",
-            fontSize: "14px",
-            fontWeight: "bold",
-            transition: "all 0.3s ease",
-          }}
-          onMouseEnter={(e) => {
-            if (params.row.status !== "success") {
-              e.target.style.backgroundColor = "#0056b3";
-              e.target.style.borderColor = "#0056b3";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (params.row.status !== "success") {
-              e.target.style.backgroundColor = "#007BFF";
-              e.target.style.borderColor = "#007BFF";
-            }
-          }}
-        >
-          Update
-        </button>
-      ),
+      field: "actions",
+      headerName: "ACTIONS",
+      flex: 0.8,
+      renderCell: (params) => {
+        const isDisabled = ["success", "completed", "rejected"].includes(params.row.status?.toLowerCase());
+        return (
+          <div className="flex space-x-2">
+            <Button
+              variant="contained"
+              onClick={() => handleUpdate(params.row)}
+              disabled={isDisabled}
+              sx={{
+                backgroundColor: isDisabled ? "#e9ecef" : "#007bff",
+                color: isDisabled ? "#6c757d" : "white",
+                '&:hover': {
+                  backgroundColor: isDisabled ? "#e9ecef" : "#0069d9",
+                },
+                textTransform: 'none',
+                fontSize: '14px',
+                fontWeight: '600',
+                padding: '6px 12px',
+                boxShadow: 'none',
+                pointerEvents: isDisabled ? 'none' : 'auto',
+                opacity: isDisabled ? 0.7 : 1,
+              }}
+            >
+              Update
+            </Button>
+          </div>
+        );
+      },
     },
   ];
+
+  const modalStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 500,
+    bgcolor: 'background.paper',
+    boxShadow: 24,
+    p: 4,
+    borderRadius: '8px',
+    outline: 'none'
+  };
 
   return (
     <section className="w-full h-[100vh] flex font-poppins">
@@ -514,7 +478,7 @@ const Agentpayout = () => {
         <section className="w-[100%] m-auto py-[20px] xl:py-[20px] px-[10px] lg:px-[20px]">
           <Box m="0rem 1.5rem">
             <FlexBetween style={{ marginBottom: "1rem" }}>
-              <Header title="" subTitle="Payout Transactions" />
+              <Header title="" subTitle="Withdrawal Requests" />
               <div className="flex items-center">
                 <label className="mr-2">Auto Refresh:</label>
                 <input
@@ -526,372 +490,198 @@ const Agentpayout = () => {
               </div>
             </FlexBetween>
             
-            {/* Payout Filter Section */}
+            {/* Agent Summary */}
+            <Box mb="1rem" backgroundColor="#f8f9fa" p="1.5rem" borderRadius="0.5rem" boxShadow="0 1px 3px rgba(0,0,0,0.1)">
+              <Header title="Agent Summary" subTitle="" p="0.rem" />
+              <Box display="flex" justifyContent="space-between" flexWrap="wrap">
+                <Box p="0.5rem" minWidth="200px">
+                  <Typography variant="body2" color="#6c757d">Agent Name</Typography>
+                  <Typography variant="h6" fontWeight="600">{agentData.name}</Typography>
+                </Box>
+                <Box p="0.5rem" minWidth="200px">
+                  <Typography variant="body2" color="#6c757d">Account Number</Typography>
+                  <Typography variant="h6" fontWeight="600">{agentData.accountNumber}</Typography>
+                </Box>
+                <Box p="0.5rem" minWidth="200px">
+                  <Typography variant="body2" color="#6c757d">Total Balance (BDT)</Typography>
+                  <Typography variant="h6" fontWeight="600">{agentData.balance_in_bdt}</Typography>
+                </Box>
+                <Box p="0.5rem" minWidth="200px">
+                  <Typography variant="body2" color="#6c757d">Commission</Typography>
+                  <Typography variant="h6" fontWeight="600">{agentData.commission}</Typography>
+                </Box>
+                <Box p="0.5rem" minWidth="200px">
+                  <Typography variant="body2" color="#6c757d">Pending Withdrawals</Typography>
+                  <Typography variant="h6" fontWeight="600">
+                    {data.filter(req => req.status?.toLowerCase() === 'pending').reduce((sum, req) => sum + req.amount, 0)} BDT
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Withdrawal Filter Section */}
             <Box
-              mb="1rem"
-              backgroundColor="#EFEFFD"
-              p="0.5rem"
-              borderRadius="0.55rem"
+              mb="1.5rem"
+              backgroundColor="#f8f9fa"
+              p="1.5rem"
+              borderRadius="0.5rem"
+              boxShadow="0 1px 3px rgba(0,0,0,0.1)"
             >
               <Header title="" subTitle="Filter & Search" p="0.rem" />
               <Box
                 display="grid"
                 gridTemplateColumns="repeat(12, 1fr)"
                 gridAutoRows="80px"
+                gap="1rem"
               >
                 <Box
                   width="100%"
-                  gridColumn="span 2"
+                  gridColumn="span 3"
                   gridRow="span 1"
-                  p="0.5rem"
-                >
-                  <FormControl fullWidth>
-                    <InputLabel id="provider-label">Provider</InputLabel>
-                    <Select
-                      labelId="provider-label"
-                      id="provider-select"
-                      value={provider}
-                      label="Provider"
-                      onChange={(event) => setProvider(event.target.value)}
-                      sx={{
-                        height: "60px",
-                        "& .MuiInputBase-root": { height: "60px" },
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#d1d8e0",
-                          borderWidth: "2px",
-                        },
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "green",
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#2bcbba",
-                        },
-                        "& .MuiInputBase-input": {
-                          padding: "10px 14px",
-                          fontSize: "16px",
-                          letterSpacing: "0.1em",
-                        },
-                      }}
-                    >
-                      <MenuItem value={"all"}>ALL</MenuItem>
-                      <MenuItem value={"bkash"}>Bkash Personal</MenuItem>
-                      <MenuItem value={"nagad"}>Nagad Personal</MenuItem>
-                      <MenuItem value={"rocket"}>Rocket Personal</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-                
-                {/* Other filter fields... */}
-                <Box
-                  width="100%"
-                  gridColumn="span 2"
-                  gridRow="span 1"
-                  p="0.5rem"
                 >
                   <TextField
                     id="orderId"
                     label="Order ID"
-                    style={{ width: "100%" }}
-                    sx={{
-                      height: "60px",
-                      "& .MuiInputBase-root": { height: "60px" },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#d1d8e0",
-                        borderWidth: "2px",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "green",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2bcbba",
-                      },
-                      "& .MuiInputBase-input": {
-                        padding: "10px 14px",
-                        fontSize: "16px",
-                        letterSpacing: "0.1em",
-                      },
-                    }}
+                    fullWidth
+                    variant="outlined"
                     value={orderId}
                     onChange={(event) => setOrderId(event.target.value)}
-                  />
-                </Box>
-
-                <Box
-                  width="100%"
-                  gridColumn="span 2"
-                  gridRow="span 1"
-                  p="0.5rem"
-                >
-                  <TextField
-                    id="paymentId"
-                    label="Payment ID"
-                    style={{ width: "100%" }}
                     sx={{
-                      height: "60px",
-                      "& .MuiInputBase-root": { height: "60px" },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#d1d8e0",
-                        borderWidth: "2px",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "green",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2bcbba",
-                      },
-                      "& .MuiInputBase-input": {
-                        padding: "10px 14px",
-                        fontSize: "16px",
-                        letterSpacing: "0.1em",
+                      "& .MuiOutlinedInput-root": {
+                        "& fieldset": {
+                          borderColor: "#ced4da",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "#80bdff",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "#80bdff",
+                          boxShadow: "0 0 0 0.2rem rgba(0,123,255,.25)",
+                        },
                       },
                     }}
-                    value={paymentId}
-                    onChange={(event) => setPaymentId(event.target.value)}
                   />
                 </Box>
 
                 <Box
                   width="100%"
-                  gridColumn="span 2"
+                  gridColumn="span 3"
                   gridRow="span 1"
-                  p="0.5rem"
-                >
-                  <TextField
-                    id="agentAccount"
-                    label="Bank Account"
-                    style={{ width: "100%" }}
-                    sx={{
-                      height: "60px",
-                      "& .MuiInputBase-root": { height: "60px" },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#d1d8e0",
-                        borderWidth: "2px",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "green",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2bcbba",
-                      },
-                      "& .MuiInputBase-input": {
-                        padding: "10px 14px",
-                        fontSize: "16px",
-                        letterSpacing: "0.1em",
-                      },
-                    }}
-                    value={agentAccount}
-                    onChange={(event) => setAgentAccount(event.target.value)}
-                  />
-                </Box>
-
-                <Box
-                  width="100%"
-                  gridColumn="span 2"
-                  gridRow="span 1"
-                  p="0.5rem"
-                >
-                  <TextField
-                    id="payeeId"
-                    label="Payee ID"
-                    style={{ width: "100%" }}
-                    sx={{
-                      height: "60px",
-                      "& .MuiInputBase-root": { height: "60px" },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#d1d8e0",
-                        borderWidth: "2px",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "green",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2bcbba",
-                      },
-                      "& .MuiInputBase-input": {
-                        padding: "10px 14px",
-                        fontSize: "16px",
-                        letterSpacing: "0.1em",
-                      },
-                    }}
-                    value={payeeId}
-                    onChange={(event) => setPayeeId(event.target.value)}
-                  />
-                </Box>
-
-                <Box
-                  width="100%"
-                  gridColumn="span 2"
-                  gridRow="span 1"
-                  p="0.5rem"
-                >
-                  <TextField
-                    id="payeeAccount"
-                    label="Payee Account"
-                    style={{ width: "100%" }}
-                    sx={{
-                      height: "60px",
-                      "& .MuiInputBase-root": { height: "60px" },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#d1d8e0",
-                        borderWidth: "2px",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "green",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2bcbba",
-                      },
-                      "& .MuiInputBase-input": {
-                        padding: "10px 14px",
-                        fontSize: "16px",
-                        letterSpacing: "0.1em",
-                      },
-                    }}
-                    value={payeeAccount}
-                    onChange={(event) => setPayeeAccount(event.target.value)}
-                  />
-                </Box>
-
-                <Box
-                  width="100%"
-                  gridColumn="span 2"
-                  gridRow="span 1"
-                  p="0.5rem"
                 >
                   <TextField
                     id="transactionId"
                     label="Transaction ID"
-                    style={{ width: "100%" }}
-                    sx={{
-                      height: "60px",
-                      "& .MuiInputBase-root": { height: "60px" },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#d1d8e0",
-                        borderWidth: "2px",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "green",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2bcbba",
-                      },
-                      "& .MuiInputBase-input": {
-                        padding: "10px 14px",
-                        fontSize: "16px",
-                        letterSpacing: "0.1em",
-                      },
-                    }}
+                    fullWidth
+                    variant="outlined"
                     value={transactionId}
                     onChange={(event) => setTransactionId(event.target.value)}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        "& fieldset": {
+                          borderColor: "#ced4da",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "#80bdff",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "#80bdff",
+                          boxShadow: "0 0 0 0.2rem rgba(0,123,255,.25)",
+                        },
+                      },
+                    }}
                   />
                 </Box>
 
                 <Box
                   width="100%"
-                  gridColumn="span 2"
+                  gridColumn="span 3"
                   gridRow="span 1"
-                  p="0.5rem"
                 >
                   <TextField
                     id="minAmount"
                     label="Min. Amount"
-                    style={{ width: "100%" }}
-                    sx={{
-                      height: "60px",
-                      "& .MuiInputBase-root": { height: "60px" },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#d1d8e0",
-                        borderWidth: "2px",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "green",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2bcbba",
-                      },
-                      "& .MuiInputBase-input": {
-                        padding: "10px 14px",
-                        fontSize: "16px",
-                        letterSpacing: "0.1em",
-                      },
-                    }}
+                    fullWidth
+                    variant="outlined"
                     value={minAmount}
                     onChange={(event) => setMinAmount(event.target.value)}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        "& fieldset": {
+                          borderColor: "#ced4da",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "#80bdff",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "#80bdff",
+                          boxShadow: "0 0 0 0.2rem rgba(0,123,255,.25)",
+                        },
+                      },
+                    }}
                   />
                 </Box>
 
                 <Box
                   width="100%"
-                  gridColumn="span 2"
+                  gridColumn="span 3"
                   gridRow="span 1"
-                  p="0.5rem"
                 >
                   <TextField
                     id="maxAmount"
                     label="Max. Amount"
-                    style={{ width: "100%" }}
-                    sx={{
-                      height: "60px",
-                      "& .MuiInputBase-root": { height: "60px" },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#d1d8e0",
-                        borderWidth: "2px",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "green",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2bcbba",
-                      },
-                      "& .MuiInputBase-input": {
-                        padding: "10px 14px",
-                        fontSize: "16px",
-                        letterSpacing: "0.1em",
-                      },
-                    }}
+                    fullWidth
+                    variant="outlined"
                     value={maxAmount}
                     onChange={(event) => setMaxAmount(event.target.value)}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        "& fieldset": {
+                          borderColor: "#ced4da",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "#80bdff",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "#80bdff",
+                          boxShadow: "0 0 0 0.2rem rgba(0,123,255,.25)",
+                        },
+                      },
+                    }}
                   />
                 </Box>
 
                 <Box
                   width="100%"
-                  gridColumn="span 2"
+                  gridColumn="span 3"
                   gridRow="span 1"
-                  p="0.5rem"
                 >
                   <FormControl fullWidth>
-                    <InputLabel id="payout-status-label">Payout Status</InputLabel>
+                    <InputLabel id="withdrawal-status-label">Withdrawal Status</InputLabel>
                     <Select
-                      labelId="payout-status-label"
-                      id="payout-status-select"
-                      value={payoutStatus}
-                      label="Payout Status"
-                      onChange={(event) => setPayoutStatus(event.target.value)}
+                      labelId="withdrawal-status-label"
+                      id="withdrawal-status-select"
+                      value={withdrawalStatus}
+                      label="Withdrawal Status"
+                      onChange={(event) => setWithdrawalStatus(event.target.value)}
                       sx={{
-                        height: "60px",
-                        "& .MuiInputBase-root": { height: "60px" },
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#d1d8e0",
-                          borderWidth: "2px",
-                        },
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "green",
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#2bcbba",
-                        },
-                        "& .MuiInputBase-input": {
-                          padding: "10px 14px",
-                          fontSize: "16px",
-                          letterSpacing: "0.1em",
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": {
+                            borderColor: "#ced4da",
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "#80bdff",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#80bdff",
+                            boxShadow: "0 0 0 0.2rem rgba(0,123,255,.25)",
+                          },
                         },
                       }}
                     >
                       <MenuItem value={"all"}>ALL</MenuItem>
                       <MenuItem value={"pending"}>PENDING</MenuItem>
-                      <MenuItem value={"assigned"}>ASSIGNED</MenuItem>
-                      <MenuItem value={"success"}>SUCCESS</MenuItem>
+                      <MenuItem value={"approved"}>APPROVED</MenuItem>
+                      <MenuItem value={"completed"}>COMPLETED</MenuItem>
                       <MenuItem value={"rejected"}>REJECTED</MenuItem>
                       <MenuItem value={"failed"}>FAILED</MenuItem>
                     </Select>
@@ -900,9 +690,8 @@ const Agentpayout = () => {
 
                 <Box
                   width="100%"
-                  gridColumn="span 2"
+                  gridColumn="span 3"
                   gridRow="span 1"
-                  p="0.5rem"
                 >
                   <DatePicker
                     selected={startDate}
@@ -917,9 +706,8 @@ const Agentpayout = () => {
                 <Box
                   width="100%"
                   height="100%"
-                  gridColumn="span 2"
+                  gridColumn="span 3"
                   gridRow="span 1"
-                  p="0.5rem"
                 >
                   <DatePicker
                     selected={endDate}
@@ -937,56 +725,58 @@ const Agentpayout = () => {
                 width="100%"
                 display="flex"
                 justifyContent="flex-end"
-                p="0.5rem"
+                mt="1rem"
               >
                 <Button
                   id="search"
                   variant="contained"
                   onClick={() => {
                     setPage(0);
-                    fetchTransactions();
+                    fetchWithdrawals();
                   }}
                   sx={{
-                    backgroundColor: "#2bcbba",
+                    backgroundColor: "#28a745",
                     color: "white",
                     fontSize: "14px",
-                    fontWeight: "bold",
-                    padding: "10px 20px",
+                    fontWeight: "600",
+                    padding: "8px 16px",
+                    textTransform: "none",
                     "&:hover": {
-                      backgroundColor: "#20a895",
+                      backgroundColor: "#218838",
+                      boxShadow: "none",
                     },
+                    "&:active": {
+                      boxShadow: "none",
+                    },
+                    mr: 2
                   }}
                 >
                   Search
                 </Button>
                 <Button
                   id="reset"
-                  variant="contained"
+                  variant="outlined"
                   onClick={() => {
-                    setProvider("all");
                     setOrderId("");
-                    setPaymentId("");
                     setTransactionId("");
-                    setPayeeId("");
-                    setAgentAccount("");
-                    setPayeeAccount("");
                     setMinAmount("");
                     setMaxAmount("");
-                    setPayoutStatus("all");
+                    setWithdrawalStatus("all");
                     setStartDate(new Date(preDate));
                     setEndDate(new Date());
                     setPage(0);
-                    fetchTransactions();
+                    fetchWithdrawals();
                   }}
                   sx={{
-                    backgroundColor: "#ff7675",
-                    color: "white",
+                    borderColor: "#dc3545",
+                    color: "#dc3545",
                     fontSize: "14px",
-                    fontWeight: "bold",
-                    padding: "10px 20px",
-                    marginLeft: "10px",
+                    fontWeight: "600",
+                    padding: "8px 16px",
+                    textTransform: "none",
                     "&:hover": {
-                      backgroundColor: "#d63031",
+                      backgroundColor: "#f8f9fa",
+                      borderColor: "#dc3545",
                     },
                   }}
                 >
@@ -995,40 +785,46 @@ const Agentpayout = () => {
               </Box>
             </Box>
 
-            {/* Payout Data Grid */}
+            {/* Withdrawal Data Grid */}
             <Box
-              m="0rem 0"
+              mb="1.5rem"
               height="70vh"
               sx={{
                 "& .MuiDataGrid-root": {
                   border: "none",
+                  fontSize: "14px",
                 },
                 "& .MuiDataGrid-cell": {
-                  borderBottom: "none",
+                  borderBottom: "1px solid #e9ecef",
                 },
                 "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "#2bcbba",
+                  backgroundColor: "#343a40",
                   color: "white",
                   borderBottom: "none",
+                  fontSize: "15px",
                 },
                 "& .MuiDataGrid-virtualScroller": {
                   backgroundColor: "white",
                 },
                 "& .MuiDataGrid-footerContainer": {
-                  borderTop: "none",
-                  backgroundColor: "#2bcbba",
-                  color: "white",
+                  borderTop: "1px solid #e9ecef",
+                  backgroundColor: "white",
                 },
                 "& .MuiDataGrid-toolbarContainer .MuiButton-text": {
-                  color: "#2bcbba !important",
+                  color: "#495057 !important",
+                },
+                "& .MuiDataGrid-row": {
+                  "&:hover": {
+                    backgroundColor: "#f8f9fa",
+                  },
                 },
               }}
             >
               <DataGrid
                 loading={loading}
-                rows={(data.transactions || []).map(row => ({ ...row, id: row._id }))}
-                columns={transactionTableColumns}
-                rowCount={data.total || 0}
+                rows={data.map(row => ({ ...row, id: row._id }))}
+                columns={withdrawalTableColumns}
+                rowCount={data.length}
                 rowsPerPageOptions={[20, 50, 100]}
                 pagination
                 page={page}
@@ -1043,62 +839,124 @@ const Agentpayout = () => {
           </Box>
 
           {/* Update Status Modal */}
-          {isModalOpen && (
-            <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] bg-opacity-50 flex items-center justify-center z-[10000]">
-              <div className="bg-white p-6 rounded-lg w-full max-w-md">
-                <h2 className="text-xl font-bold mb-4">Update Transaction Status</h2>
-                
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Transaction ID</label>
-                  <div className="flex items-center">
-                    <input
-                      type="text"
-                      value={transiction_value}
-                      onChange={(e) => settransiction_value(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded"
-                      placeholder="Enter transaction ID"
-                    />
-                    <button 
-                      onClick={() => copyToClipboard(transiction_value)}
-                      className="ml-2 p-2 bg-gray-200 rounded hover:bg-gray-300"
-                    >
-                      <AiOutlineCopy size={18} />
-                    </button>
-                  </div>
-                </div>
+          <Modal
+            open={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            aria-labelledby="update-status-modal"
+            aria-describedby="update-withdrawal-status"
+          >
+            <Paper sx={modalStyle}>
+              <Typography variant="h6" component="h2" mb={3} fontWeight="600">
+                Update Withdrawal Status
+              </Typography>
+              
+              <Box mb={3}>
+                <Typography variant="subtitle1" mb={1} fontWeight="500">
+                  Transaction ID
+                </Typography>
+                <Box display="flex" alignItems="center">
+                  <TextField
+                    fullWidth
+                    value={transiction_value}
+                    onChange={(e) => settransiction_value(e.target.value)}
+                    variant="outlined"
+                    placeholder="Enter transaction ID"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        "& fieldset": {
+                          borderColor: "#ced4da",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "#80bdff",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "#80bdff",
+                          boxShadow: "0 0 0 0.2rem rgba(0,123,255,.25)",
+                        },
+                      },
+                    }}
+                  />
+                  <Button 
+                    onClick={() => copyToClipboard(transiction_value)}
+                    sx={{
+                      ml: 1,
+                      minWidth: '40px',
+                      height: '56px',
+                      backgroundColor: '#f8f9fa',
+                      color: '#495057',
+                      '&:hover': {
+                        backgroundColor: '#e9ecef',
+                      }
+                    }}
+                  >
+                    <AiOutlineCopy size={18} />
+                  </Button>
+                </Box>
+              </Box>
 
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Status</label>
-                  <select
-                    value={status}
-                    onChange={handleStatusChange}
-                    className="w-full p-2 border border-gray-300 rounded"
-                  >
-                    {selectOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <Box mb={4}>
+                <Typography variant="subtitle1" mb={1} fontWeight="500">
+                  Status
+                </Typography>
+                <Select
+                  fullWidth
+                  value={status}
+                  onChange={handleStatusChange}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      "& fieldset": {
+                        borderColor: "#ced4da",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#80bdff",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#80bdff",
+                        boxShadow: "0 0 0 0.2rem rgba(0,123,255,.25)",
+                      },
+                    },
+                  }}
+                >
+                  {selectOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </Box>
 
-                <div className="flex justify-end space-x-4">
-                  <button
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveUpdate}
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+              <Box display="flex" justifyContent="flex-end">
+                <Button
+                  onClick={() => setIsModalOpen(false)}
+                  variant="outlined"
+                  sx={{
+                    mr: 2,
+                    borderColor: "#6c757d",
+                    color: "#6c757d",
+                    '&:hover': {
+                      backgroundColor: '#f8f9fa',
+                      borderColor: '#6c757d',
+                    }
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveUpdate}
+                  variant="contained"
+                  sx={{
+                    backgroundColor: "#28a745",
+                    color: "white",
+                    '&:hover': {
+                      backgroundColor: "#218838",
+                    }
+                  }}
+                >
+                  Save Changes
+                </Button>
+              </Box>
+            </Paper>
+          </Modal>
         </section>
       </section>
     </section>

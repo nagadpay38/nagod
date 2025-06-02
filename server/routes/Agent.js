@@ -309,6 +309,7 @@ agent_route.get("/single-agent-withdraw/:id", async (req, res) => {
 agent_route.put("/agent-withdraw-status/:id", async (req, res) => {
   try {
     const { status } = req.body;
+    console.log(status)
     if (!["pending", "approved", "rejected"].includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
@@ -316,7 +317,7 @@ agent_route.put("/agent-withdraw-status/:id", async (req, res) => {
     // Find the withdrawal request
     const withdraw = await Agentwithdraw.findById(req.params.id);
     if (!withdraw) {
-      return res.status(404).json({ message: "Withdrawal not found" });
+      return res.json({ message: "Withdrawal not found" });
     }
 
     // If status is rejected, refund the amount back to the agent
@@ -847,4 +848,85 @@ agent_route.get('/agents/:agent_id/withdrawal-requests', async (req, res) => {
   }
 });
 
+
+// Get agent data with withdrawal requests by agent_id
+agent_route.get('/agent-withdrawal-data/:agent_id', async (req, res) => {
+  try {
+    const { agent_id } = req.params;
+    console.log(agent_id)
+    // Validate agent_id
+    if (!mongoose.Types.ObjectId.isValid(agent_id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid agent ID format'
+      });
+    }
+
+    // Find agent with withdrawalRequests
+    const agent = await Agent_model.findById(agent_id)
+    if (!agent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Agent not found'
+      });
+    }
+    
+    console.log("first",agent)
+
+    // Sort withdrawalRequests by date in descending order (newest first)
+    const sortedWithdrawalRequests = [...agent.withdrawalRequests].sort((a, b) => {
+      return new Date(b.date) - new Date(a.date);
+    });
+
+    // Calculate total pending withdrawal amount from sorted requests
+    const pendingWithdrawals = sortedWithdrawalRequests.filter(req => req.status === 'pending');
+    const totalPending = pendingWithdrawals.reduce((sum, req) => sum + req.amount, 0);
+
+    // Prepare response data
+    const responseData = {
+      agent: {
+        id: agent._id,
+        name: agent.name,
+        email: agent.email,
+        accountNumber: agent.accountNumber,
+        status: agent.status,
+        balances: {
+          usd: agent.balance_in_dollar,
+          bdt: agent.balance_in_bdt,
+          commission: agent.commission
+        },
+        limits: {
+          total: agent.limitAmount,
+          remaining: agent.remaininglimit
+        },
+        rates: {
+          deposit_commission: agent.commission_rate,
+          withdraw_commission: agent.withdraw_commission_rate
+        },
+        createdAt: agent.createdAt,
+        updatedAt: agent.updatedAt
+      },
+      withdrawalSummary: {
+        totalRequests: sortedWithdrawalRequests.length,
+        pendingCount: pendingWithdrawals.length,
+        totalPendingAmount: totalPending
+      },
+      withdrawalRequests: sortedWithdrawalRequests // Use the sorted array
+    };
+   
+    console.log("w2weqwe",responseData)
+    return res.json({
+      success: true,
+      data: responseData
+    });
+
+  } catch (error) {
+    console.error('Error fetching agent withdrawal data:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching agent data',
+      error: error.message
+    });
+  }
+});
 export default agent_route

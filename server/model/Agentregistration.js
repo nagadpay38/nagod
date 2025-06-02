@@ -40,6 +40,9 @@ const TransactionSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
+  agent_number:{
+    type: String,
+  },
   merchantId: {
     type: String,
     default: ""
@@ -54,6 +57,9 @@ const TransactionSchema = new mongoose.Schema({
   isWithdrawalRequest: {
     type: Boolean,
     default: false
+  },
+  payeeAccount:{
+        type: String,
   }
 });
 
