@@ -1360,7 +1360,7 @@ export const resend_callback_payout = async (req, res) => {
   }
   console.log(req.body)
   try {
-    const transaction = await PayoutTransaction.findOne({paymentId:payment_id});
+        const transaction = await PayoutTransaction.findOne({paymentId:payment_id});
     if (!transaction) throw Error('Transaction does not exists');
 
     let result = {
