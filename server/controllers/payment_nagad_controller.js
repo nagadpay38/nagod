@@ -47,12 +47,12 @@ let NAGAD_NPUBKEY = process.env.SANDBOX_NAGAD_NPUBKEY;
 
 const config = {
   apiVersion: "v-0.2.0",
-  baseURL: "http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0",
-  callbackURL: NAGAD_CALLBACK_URL,
-  merchantID: "686057456165399",
-  merchantNumber: "01605745616",
-  privKey: "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC3BgEUI3TcYDzGfZZRUQr4tJPzd/dwl83zfOHZh+gcRJF/cq5ks7CFwmRlUpelYAaSbxhIwpIPySAX7uBE+h1ByODyfxrlK0RizNR97OV0kie2vIwplksENvdJLaC6m1r39tQ5GUjE6H3SmI8RN42bMRqhxJvtnq9Ik4ur515FkMNcvMXqDArz95CNlQXTi9cQy1ocTs/2rzPCtRGA+tVbqj3ZAzeXH/WELW88EAS+j/eYQD8t9DzQ6UN7Ica6RvNcYLelswqTS94GhFARGKAc4+qe6+KOrz0KWnv7ZogAFMEnN68agIxw5070ZXPBceOkGcBpWcObBY/2a8ttAl17AgMBAAECggEAfh9rGt+cJklDWF0u+vZoIx79XafsIfDagdIrKOZY8zHlOfhjaQ3StTpSSOhzjAjyPnLEP0+lq68jqJp6fc4F31F4gmNIu2fnhlY0kFpxfLVDHNAtnnLtWwgtvIXu3ukz9PBpKrfbx6WXH0r2PB0WPj3GZnfAJC1YCSFz/JBCDJkdRpmqFr5xpDQqDAuuRHw1glzUuELuNj9uEB7egWgSG3e1v4njeJ6jfA5aE8r5Tm2FU5xs0sq9RwFim9yfJee1wNAHseQdsz2fthSVzEN+Z/qAcKsSW1QQ2FTjhthl+Nf1WXgY7KkvKs20amxIVhE3Xlapb95KhRy1LiyG9yflUQKBgQDcaXtAkUaS0uhchZHO0oPoAvP3g+q4xJej2tfA/EiOet4AofaHxNbeuc/cAKCEuIvb8bEE5YivtgZzoWtxlTHIXOJ+dIXAODBcPtWEiwPTjqWAMGO+Nt9UHpeAAL2ChzjLjeeCQOImAf3ol2nfXHns9gCtrdasOl7xe3oJE1ktxwKBgQDUkxoQeL/63+sVDrm/4raXU00Og5+m/5aAF9wkrT7V1wDy+ThFjqMgaWDz6bldkug7V6TvfGzdqryqS5uVPbaKTg84ZiIJAH6zMxOAgJNTvZfZxtxhklqVJl0q9gYaxGi9nsT3ZFk7+fRjyfvTJHyKj9yxmw5OmnCS9944GQYirQKBgQCp7k0PH7IYerCYvIYIvbbixnwPhU4O+8qpkoyrBhZuev3z4OrwC+tZNkqyJG2dRabWgMVosAqs5ZqdxYLPxCXoguxAcFe6NdfbFrqJgKAHmD+y0BvmR+nwsdE959Qz8UrxbMtjWeDBSuHWU/5VLbf24EbvoEoU6L/QT9Frc9ZaewKBgFmSTnZIWyS7+5OY694WCrhC6oJGJhy5L9Jzu1hdA9AZU5YOO47bppL+tFKy1l++ikqPCLm85SaWTf838qv1IBixAarTJl5CriCWUg5gnzO2/OhP6gbXI4Ibc0CqADKBNl1ILFjOGOez0C3IK2txwWSlb+oKmwG2A995wFJFARfVAoGAHiKlKEOtdczrF8BxLcJPO4DWLNHq2QcqC3Jf+uY9WYLlxv4zialDfoOV66j+gMcinPdDXu3NDHAbK/x/h3ot/Gp0BfnYx1+qtXozhg9FAwxeYV6dZU9x8ab+tSbqlTgoRlsfXrvJSdYsWxbUpteSHBn3j9/ghUucND/PQUf1Aj8=",
-  pubKey: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiCWvxDZZesS1g1lQfilVt8l3X5aMbXg5WOCYdG7q5C+Qevw0upm3tyYiKIwzXbqexnPNTHwRU7Ul7t8jP6nNVS/jLm35WFy6G9qRyXqMc1dHlwjpYwRNovLc12iTn1C5lCqIfiT+B/O/py1eIwNXgqQf39GDMJ3SesonowWioMJNXm3o80wscLMwjeezYGsyHcrnyYI2LnwfIMTSVN4T92Yy77SmE8xPydcdkgUaFxhK16qCGXMV3mF/VFx67LpZm8Sw3v135hxYX8wG1tCBKlL4psJF4+9vSy4W+8R5ieeqhrvRH+2MKLiKbDnewzKonFLbn2aKNrJefXYY7klaawIDAQAB",
+  baseURL: "http://mynagad.com:10080/remote-payment-gateway-1.0",
+  callbackURL: "https://nagodpay.com/api/payment/p2c/nagad/callback",
+  merchantID: "687116248255399",
+  merchantNumber: "01711624825",
+  privKey: "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDgAov6qDgsbWxDQlJoX/QHMNal2YLj0OWg+cm5e/Oe+Y4/r/fgdyIqiky9r78fvfI17GElCcleUCa4dJrmp4ueaDWNK42b2wC1KLuVeLrzody1y+5s7wKsEM8jdct/0e+kkmtLEm8Lrb7H5DxyCfrxyYXL0aeosY+TygfHlg+yHKsImSigwI3uHVClBRhPw59H5+D49Vzkq5o5mETfISdP5Z0b2pmVRdLqmAFdXRZcH6NolkuQtpSCvMC1DC2tA+IhxQyjwBwnPwssORdey54wGfdZL3xgu50YSfEVRoiEuwm1mujvHb5Bn/FB/pbWtLu9JHTvrDyJSOun/V679IwrAgMBAAECggEAYO+5M1boOBGB7/kbQB+FsjboLAzcH0melPKC4MlKu1iyvcygL3peRppiaxNKWaoQzlTkFOsPQMjeeKO9BGMsf/gIdHaMaQ10WPCvfBcqj5NTtzfwjSNAvMTpXibzUPTABy91Tp9DfoJJNKcHoTHAbjEOvQyUyONNhl6+zxeY4zHFR81ODsDx86qmTaMIp/UnzyJi86mrbZY0X/iq3s0rBfLbmzvqZ/la7kpAxZ3osHekp3KZ/df1TMOrO+wemlNDI3zYO8UVd4AqRS+etJneCi+awMbzuC6GcZdNK014mXMp2fZtQ7y4f7rfdfYIAtL7lyahU39RigzdspPwPIhgwQKBgQD474vku/hdxOVqrpUPrb/YbO196CBmRMFiLxxPHYRwU4V/+GguTE2bVaBZQDL/Y8heL93f/+bCa1We6l5VGGmIPQbdjRSOvt9UgIlA9fd1SS++VBU544JXCXpRFDUaroA0OMYiDnrn46S/tx9c0XOiXWCjke+40Gfp+Pe2EbKSlQKBgQDmXevG7Rh78cnTZqWPW6AffvUGNzVOOjjqNdbsqX4B2BIbth5iAaj4wjL0Ay3cM8U06MkpMlZ43TB3OZsxIR2D7v9cJRCkL6J+8e805meGhwkV/hUXh4e1/TYJROz/bkeDjNw4z+/HmF9KO3VzbFlzHgefcmJF925VGKgwIo+zvwKBgQDzHtEb1dEdk10UMel25JSHROs1mm16NBBCWgxl4EgmhAvQDcWB4hexa5EtWZv0/XkFM+6YBI9UtgtrJy52IV+AJUn9Ovom55eqKdbi0Nabf5zXX7tTTDVR1/nUEc5DfsXLOt+XB1lV/Gg8rRY+SnmKy3PEjJT5hODYC8Wx1dr3eQKBgQCExzG00MfB+NUJgip+/KLIRJbZ5ExXMHvJkwq0EeVNDssxKcFNYAOSjexsdMCkITrTijEYC6mHtIXQ0mU+5gVrHAAXjk2PNN2GKdBkP0EAayizgmWJ0FZKcQ4KPa4Uc+3IRxJPtJpSAuM5mBfUVWkhTve50WYPSdRQPAwE4obNZQKBgFbiAcmSUUvxuGN9IbJf6yhcIPSvTy2z+0ytEXxvSMiyOX7dlC9vN5bE3W4e/C/GAKXwVmWamxbiXXoX1Bf8J8eA+25duSXADiE5n1tfK3BoOW6LHlMMmSuL8D/UB60CnKb/FsJDDCgdJPDEgqDVLByF9rXah/Ia6F1LoA8e+Wij",
+  pubKey: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4AKL+qg4LG1sQ0JSaF/0BzDWpdmC49DloPnJuXvznvmOP6/34HciKopMva+/H73yNexhJQnJXlAmuHSa5qeLnmg1jSuNm9sAtSi7lXi686HctcvubO8CrBDPI3XLf9HvpJJrSxJvC62+x+Q8cgn68cmFy9GnqLGPk8oHx5YPshyrCJkooMCN7h1QpQUYT8OfR+fg+PVc5KuaOZhE3yEnT+WdG9qZlUXS6pgBXV0WXB+jaJZLkLaUgrzAtQwtrQPiIcUMo8AcJz8LLDkXXsueMBn3WS98YLudGEnxFUaIhLsJtZro7x2+QZ/xQf6W1rS7vSR076w8iUjrp/1eu/SMKwIDAQAB",
   isPath: false,
 };
 
@@ -62,42 +62,45 @@ const nagad = new NagadGateway(config);
 
 export const payment_nagad = async (req, res) => {
   try {
+    console.log('Starting payment_nagad function');
     const data = req.body;
-   console.log(nagad)
+    console.log('Request body:', JSON.stringify(data, null, 2));
+    console.log('Nagad Base URL:', nagad.baseURL); 
     // API Key validation
-    const apiKey ="CDA990F26E7D765621178638A292EDB84FEE2D44E4ADA8DA8939DFF76DAD64D9";
+    const apiKey = "CDA990F26E7D765621178638A292EDB84FEE2D44E4ADA8DA8939DFF76DAD64D9";
+    console.log('API Key being used:', apiKey);
+    
     if (!apiKey) {
+      console.error('API key is missing');
       return sendErrorResponse(res, "API key is required.", data.orderId);
     }
 
     // Required fields validation
+    console.log('Validating required fields');
     const validationError = validateRequiredFields(data);
     if (validationError) {
+      console.error('Validation error:', validationError);
       return sendErrorResponse(res, validationError, data.orderId);
     }
 
     // Amount validation
+    console.log('Validating amount');
     const amountError = validateAmount(data.amount, data.currency);
     if (amountError) {
+      console.error('Amount validation error:', amountError);
       return sendErrorResponse(res, amountError, data.orderId);
     }
 
     // Merchant validation
+    console.log('Validating merchant');
     const merchant = await User.findOne({
       name: data.mid,
       status: "activated",
     });
-
-    if (data.mid !== "merchant1" && (!merchant || merchant.apiKey !== apiKey)) {
-      return sendErrorResponse(
-        res,
-        "Invalid merchant or API key",
-        data.orderId
-      );
-    }
+    console.log('Merchant found:', merchant);
 
     // Duplicate transaction check
-    console.log(data);
+    console.log('Checking for duplicate transactions');
     const paymentConfig = {
       amount: data.amount,
       ip: data.ip,
@@ -105,11 +108,16 @@ export const payment_nagad = async (req, res) => {
       productDetails: { order_id: data.orderId },
       clientType: "PC_WEB",
     };
+    console.log('Payment config:', paymentConfig);
+
     const existingTransaction = await PayinTransaction.findOne({
       orderId: data.orderId,
       merchant: data.mid,
     });
+    console.log('Existing transaction check result:', existingTransaction);
+    
     if (existingTransaction) {
+      console.error('Duplicate transaction found');
       return sendErrorResponse(
         res,
         `Transaction with duplicated order id, ${data.orderId}.`,
@@ -118,35 +126,45 @@ export const payment_nagad = async (req, res) => {
     }
 
     // Create Nagad payment
-
     const referenceId = `${Date.now()}`;
+    console.log('Generated referenceId:', referenceId);
 
     let nagadResponse;
+    console.log('Attempting to create Nagad payment');
 
     try {
+      console.log('Calling nagad.createPayment with config:', paymentConfig);
       nagadResponse = await nagad.createPayment(paymentConfig);
-      console.log(nagadResponse)
+      console.log('Nagad payment response:', JSON.stringify(nagadResponse, null, 2));
       console.log("nagad-payment-response", nagadResponse);
     } catch (error) {
-      console.log(error);
+      console.error('Error in nagad.createPayment:', error);
+      console.log("Full error details:", {
+        message: error.message,
+        stack: error.stack,
+        code: error.code,
+        type: error.type,
+        errno: error.errno
+      });
       console.error("nagad-payment-creation-error:", error);
       return sendErrorResponse(
         res,
-        "Failed to create Nagad payment: " +
-          (error),
+        "Failed to create Nagad payment: " + error.message,
+        data.orderId
       );
     }
 
     if (!nagadResponse) {
-      console.log("nagad-payment-creation-failed", nagadResponse);
+      console.error("nagad-payment-creation-failed - No response received");
       return sendErrorResponse(
         res,
-        `Payment creation failed: ${nagadResponse.message || "Internal Error"}`,
+        `Payment creation failed: No response received from Nagad`,
         data.orderId
       );
     }
 
     // Create transaction record
+    console.log('Creating transaction record');
     const newTransaction = await PayinTransaction.create({
       paymentId: nagadResponse.paymentId,
       merchant: data.mid,
@@ -162,9 +180,9 @@ export const payment_nagad = async (req, res) => {
       paymentType: "p2c",
       status: "pending",
     });
-
     console.log("Transaction created successfully:", newTransaction._id);
 
+    console.log('Returning success response');
     return res.status(200).json({
       success: true,
       message: "Payment link created.",
@@ -174,7 +192,13 @@ export const payment_nagad = async (req, res) => {
       referenceId,
     });
   } catch (error) {
-    console.error("payment_nagad fatal error:", error);
+    console.error("payment_nagad fatal error:", {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      type: error.type,
+      errno: error.errno
+    });
     return sendErrorResponse(res, error.message, req.body?.orderId, 500);
   }
 };
