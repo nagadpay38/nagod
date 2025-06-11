@@ -1,0 +1,24 @@
+{
+  "from": "bkash",
+  "number": "017XXXXXXXX",
+  "sentStamp": "2025-02-16T12:30:00Z",
+  "receivedStamp": "2025-02-16T12:31:00Z",
+  "text": "Cash Out Tk 500.00 from 018XXXXXXXX\nTrxID ABC12345\nFee Tk 5.00\nBalance Tk 1500.00\n16/02/2025 18:30"
+}
+
+{
+  "from": "nagad",
+  "number": "017XXXXXXXX",
+  "sentStamp": "2025-02-16T12:30:00Z",
+  "receivedStamp": "2025-02-16T12:31:00Z",
+  "text": "Cash In Successful\nTxnID: ABC12345\nAmount: Tk 500.00\nCustomer: 018XXXXXXXX\nComm: Tk 5.00\nBalance: Tk 1500.00\n16/02/2025 18:30"
+}
+
+
+{
+  "from": "bkash",
+  "number": "0182228288",
+  "sentStamp": "2025-05-25T18:31:00.000Z",
+  "receivedStamp": "2025-05-25T18:32:00.000Z",
+  "text": "Cash In Tk 400.00 to 016888458. TrxID XABC123456. Fee Tk 10.00. Balance Tk 5000.00. 25/05/2025 18:30"
+}

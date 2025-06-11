@@ -1,0 +1,125 @@
+.deposit-main{
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.pament-option{
+    width: 30%;
+    height: auto;
+    background-color: white;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    border-radius: 10px;
+}
+.deposit-tit{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid #dcdde1;
+}
+ .deposit-text{
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 10px;
+ }
+ .deposit-text i{
+    font-size: 25px;
+ }
+ .deposit-text p{
+    font-size: 18px;
+    font-weight: 600;
+ }
+ .deposit-tit button{
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #dcdde1;
+    font-size: 22px;
+    color: #7f8fa6;
+ }
+ .deposit-option{
+    width: 100%;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+ }
+ .deposit-option button{
+    width: 50%;
+    height: 50px;
+    background-color: #fed330;
+    font-size: 18px;
+    border-radius: 5px;
+ }
+ .pament-option2{
+    width: 100%;
+ }
+ .text1{
+    width: 100%;
+    padding: 10px 20px;
+ }
+ .text1 h2{
+    font-size: 18px;
+    font-weight: 600;
+ }
+ .deposit-box{
+    width: 100%;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 20px;
+ }
+ .deposit-box div{
+    padding: 10px 30px;
+    border-radius: 5px;
+    text-align: center;
+    background-color: #dcdde1;
+    cursor: pointer;
+    transition: 0.3s;
+ }
+ .deposit-box div:hover{
+    background-color: #fed330;
+ }
+ .deposit-box div img{
+         width: 50px;
+ }
+ .diposit{
+    width: 100%;
+    padding: 20px;
+ }
+ .diposit form{
+    width: 100%;
+ }
+ .inp{
+    margin-bottom: 10px;
+ }
+ .inp input{
+    width: 100%;
+    height: 55px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 20px;
+    font-size: 17px;
+    margin-top: 5px;
+    outline-color: #26de81; 
+}
+ .inp label{
+    font-size: 18px;
+    
+ }
+ form button{
+    width: 100%;
+    height: 55px;
+    font-size: 19px;
+    cursor: pointer;
+    background-color: #f7b731;
+    border-radius: 5px;
+ }
