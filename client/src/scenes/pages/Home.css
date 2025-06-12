@@ -1,0 +1,34 @@
+.main-section{
+    width: 100%;
+    height: auto;
+    background-image: url("https://www.creativeitinstitute.com/assets/images/home//banner_bg.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+.hero{
+    width: 100%;
+    height: 80vh;
+    padding: 20px 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+}
+.hero-left{
+    width: 50%;
+}
+.hero-right{
+    width: 50%;
+}
+.sub-tit{
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.sub-tit h1{
+    font-size: 20px;
+    color: black;
+    font-weight: 600;
+}

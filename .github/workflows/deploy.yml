@@ -1,0 +1,52 @@
+name: NodeJS EASYPAY
+
+run-name: Deploy to Ubuntu Server by @${{ github.actor }}
+
+on:
+  push:
+    branches:
+      - dev-usama
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.18.2]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            cd /root/easypay/V.3.0/
+
+            # Pull the latest changes
+            git pull origin dev-usama
+
+            # Navigate to the server directory
+            cd server
+            npm install
+
+            # Restart or start the server using PM2
+            pm2 restart server || npm run start:pm2
+
+            # Navigate to the client directory and build the client
+            cd ../client
+            npm install
+            npm run build
+
+            # Deploy the client build to the web server directory
+            cp -r build/* /var/www/html/react-app
