@@ -6,7 +6,7 @@ const Document = () => {
       <div className="p-6 text-sm md:text-base leading-relaxed space-y-4 w-full border-[1px] border-gray-200 shadow-md bg-white">
         <h1 className="text-2xl font-bold text-center text-gray-800">NagodPay Payment API Documentation</h1>
 <section className="prose prose-indigo max-w-none">
-  <h2 className="text-2xl font-bold text-gray-800">1. Create Payment (P2C)</h2>
+  <h2 className="text-2xl font-bold text-gray-800">1. Create Payment (P2P)</h2>
 
 
   <h3 className="text-xl font-semibold mt-6">Endpoint</h3>
