@@ -812,7 +812,7 @@ const Document = () => {
   <h3 className="text-xl font-semibold mt-6 mb-2">Flow Diagram</h3>
   <div className="bg-gray-100 p-4 rounded">
     <pre className="text-sm">
-{`1. Fetch transaction status (GET /api/user/transaction-status/:transactionId)
+{`1. Fetch transaction status (GET https://api.nagodpay.com/api/user/transaction-status/:transactionId)
    ↓
 2. If successful → Fetch user details (GET /auth/user/:userId)
    ↓
@@ -882,7 +882,7 @@ const Document = () => {
 
   <h3 className="text-xl font-semibold mt-6">API Endpoints Used</h3>
   <div className="space-y-2">
-    <p><strong>GET</strong> <code className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded">/api/user/transaction-status/:transactionId</code></p>
+    <p><strong>GET</strong> <code className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded">https://api.nagodpay.com/api/user/transaction-status/:transactionId</code></p>
     <p><strong>GET</strong> <code className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded">/auth/user/:userId</code> (with Authorization header)</p>
     <p><strong>POST</strong> <code className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded">/user/create-transaction</code></p>
   </div>
